@@ -1,0 +1,920 @@
+  1 #include <stdio.h>
+  2 #include <stdlib.h>
+  3 #include <pthread.h>
+  4
+  5 void inca(int *a) {
+  6         a = a+1;
+  7         printf("%d increments a to %d",getpid(),a);
+  8 }
+  9
+ 10 int main(int argc, char* argv[]) {
+ 11         int i, a = 0, num_thds = 5, max_thds = 100;
+ 12         if(argc > 1) num_thds = strtol(argv[1],NULL,10);
+ 13         if(num_thds>max_thds) num_thds = max_thds;
+ 14         pthread_t thd_iter, workers[num_thds];
+ 15         for(i=0;i<num_thds;i++) {
+ 16                 if(pthread_create(&thd_iter,NULL,inca,a)) {
+ 17                         perror("[*] ERROR [*]: Failed to create thread.\n");
+ 18                         exit(-i+1); //accounting for i==0, error code gives iteration number
+ 19                 }
+ 20                 workers[i] = thd_iter;
+ 21         }
+ 22         for(i=0;i<num_thds;i++) {
+ 23                 pthread_join(workers[i],NULL); //parent waits for workers
+ 24         }
+ 25         exit(0);
+ 26 }
+
+
+
+ [cs412e12@nova ~/hw3]$ gcc tri_thds.c -o tt
+ tri_thds.c: In function ‘main’:
+ tri_thds.c:16: warning: passing argument 3 of ‘pthread_create’ from incompatible pointer type
+ /usr/include/pthread.h:225: note: expected ‘void * (*)(void *)’ but argument is of type ‘void (*)(int *)’
+ /tmp/ccX3qGuL.o: In function `main':
+ tri_thds.c:(.text+0xe8): undefined reference to `pthread_create'
+ tri_thds.c:(.text+0x147): undefined reference to `pthread_join'
+ collect2: ld returned 1 exit status
+
+ [cs412e12@nova ~/hw3]$ gcc tri_thds.c -pthread -o tt
+ tri_thds.c: In function ‘main’:
+ tri_thds.c:16: warning: cast to pointer from integer of different size
+ tri_thds.c:16: warning: passing argument 3 of ‘pthread_create’ from incompatible pointer type
+ /usr/include/pthread.h:225: note: expected ‘void * (*)(void *)’ but argument is of type ‘void * (*)(int *)’
+
+
+
+ 1 #include <stdio.h>
+ 2 #include <stdlib.h>
+ 3 #include <pthread.h>
+ 4
+ 5 void *inca(void *a) {
+ 6         a = a+1;
+ 7         printf("%d increments a to %d\n",getpid(),a);
+ 8 }
+ 9
+10 int main(int argc, char* argv[]) {
+11         int i, *a = 0, num_thds = 5, max_thds = 100;
+12         if(argc > 1) num_thds = strtol(argv[1],NULL,10);
+13         if(num_thds>max_thds) num_thds = max_thds;
+14         pthread_t thd_iter, workers[num_thds];
+15         for(i=0;i<num_thds;i++) {
+16                 if(pthread_create(&thd_iter,NULL,&inca,(void*) a)) {
+17                         perror("[*] ERROR [*]: Failed to create thread.\n");
+18                         exit(-i+1); //accounting for i==0, error code gives iteration number
+19                 }
+20                 workers[i] = thd_iter;
+21         }
+22         for(i=0;i<num_thds;i++) {
+23                 pthread_join(workers[i],NULL); //parent waits for workers
+24         }
+25         exit(0);
+26 }
+
+
+
+[cs412e12@nova ~/hw3]$ gcc tri_thds.c -pthread -o tt
+[cs412e12@nova ~/hw3]$ tt
+29918 increments a to 1
+29918 increments a to 1
+29918 increments a to 1
+29918 increments a to 1
+29918 increments a to 1
+
+
+https://www.tutorialspoint.com/cprogramming/c_pointers.htm
+
+
+1 #include <stdio.h>
+2 #include <stdlib.h>
+3 #include <pthread.h>
+4
+5 void *inca(void *a) {
+6         *a = *a+1;
+7         printf("%d increments a to %d\n",getpid(),*a);
+8 }
+9
+10 int main(int argc, char* argv[]) {
+11         int i, *a = 0, num_thds = 5, max_thds = 100;
+12         if(argc > 1) num_thds = strtol(argv[1],NULL,10);
+13         if(num_thds>max_thds) num_thds = max_thds;
+14         pthread_t thd_iter, workers[num_thds];
+15         for(i=0;i<num_thds;i++) {
+16                 if(pthread_create(&thd_iter,NULL,&inca,(void*) a)) {
+17                         perror("[*] ERROR [*]: Failed to create thread.\n");
+18                         exit(-i+1); //accounting for i==0, error code gives iteration number
+19                 }
+20                 workers[i] = thd_iter;
+21         }
+22         for(i=0;i<num_thds;i++) {
+23                 pthread_join(workers[i],NULL); //parent waits for workers
+24         }
+25         exit(0);
+26 }
+
+
+
+
+[cs412e12@nova ~/hw3]$ gcc tri_thds.c -pthread -o tt
+tri_thds.c: In function ‘inca’:
+tri_thds.c:6: warning: dereferencing ‘void *’ pointer
+tri_thds.c:6: warning: dereferencing ‘void *’ pointer
+tri_thds.c:6: error: void value not ignored as it ought to be
+tri_thds.c:6: error: invalid use of void expression
+tri_thds.c:7: warning: dereferencing ‘void *’ pointer
+tri_thds.c:7: error: invalid use of void expression
+
+
+
+1 #include <stdio.h>
+2 #include <stdlib.h>
+3 #include <pthread.h>
+4
+5 void *inca(void *a) {
+6         int b = *(int *) a + 1;
+7         a=(void*) &b;
+8         printf("%d increments a to %d\n",getpid(),b);
+9 //      *a = *a+1;
+10 //      printf("%d increments a to %d\n",getpid(),*a);
+11 }
+12
+13 int main(int argc, char* argv[]) {
+14         int i, *a, num_thds = 5, max_thds = 100;
+15         if(argc > 1) num_thds = strtol(argv[1],NULL,10);
+16         if(num_thds>max_thds) num_thds = max_thds;
+17         pthread_t thd_iter, workers[num_thds];
+18         for(i=0;i<num_thds;i++) {
+19                 if(pthread_create(&thd_iter,NULL,(void*) inca,(void*) a)) {
+20                         perror("[*] ERROR [*]: Failed to create thread.\n");
+21                         exit(-i+1); //accounting for i==0, error code gives iteration number
+22                 }
+23                 workers[i] = thd_iter;
+24         }
+25         for(i=0;i<num_thds;i++) {
+26                 pthread_join(workers[i],NULL); //parent waits for workers
+27         }
+28         exit(0);
+29 }
+
+
+
+[cs412e12@nova ~/hw3]$ gcc tri_thds.c -pthread -o tt
+[cs412e12@nova ~/hw3]$ tt
+32320 increments a to 2
+32320 increments a to 2
+32320 increments a to 2
+32320 increments a to 2
+32320 increments a to 2
+
+
+
+1 #include <stdio.h>
+2 #include <stdlib.h>
+3 #include <pthread.h>
+4
+5 void *dispid(void *num_iter) {
+6         int i, x = *(int *) num_iter;
+7         for(i=0;i<x;i++) {
+8                 printf("\nThread %d - iteration no. %d\n",pthread_self(),i+1);
+9         }
+10 }
+11
+12 int main(int argc, char* argv[]) {
+13         int i, *a, num_iter = 5, num_thds = 3, max_thds = 100;
+14         if(argc > 1) num_thds = strtol(argv[1],NULL,10);
+15         if(num_thds>max_thds) num_thds = max_thds;
+16         pthread_t thd_iter, workers[num_thds];
+17         for(i=0;i<num_thds;i++) {
+18                 if(pthread_create(&thd_iter,NULL,(void*) dispid,(void*) &num_iter)) {
+19                         perror("[*] ERROR [*]: Failed to create thread.\n");
+20                         exit(-i+1); //accounting for i==0, error code gives iteration number
+21                 }
+22                 workers[i] = thd_iter;
+23         }
+24         for(i=0;i<num_thds;i++) {
+25                 pthread_join(workers[i],NULL); //parent waits for workers
+26         }
+27         exit(0);
+28 }
+
+
+
+[cs412e12@nova ~/hw3]$ tt
+
+Thread -1935116544 - iteration no. 1
+
+Thread -1935116544 - iteration no. 2
+
+Thread -1935116544 - iteration no. 3
+
+Thread -1914136832 - iteration no. 1
+
+Thread -1914136832 - iteration no. 2
+
+Thread -1914136832 - iteration no. 3
+
+Thread -1914136832 - iteration no. 4
+
+Thread -1924626688 - iteration no. 1
+
+Thread -1924626688 - iteration no. 2
+
+Thread -1924626688 - iteration no. 3
+
+Thread -1924626688 - iteration no. 4
+
+Thread -1935116544 - iteration no. 4
+
+Thread -1935116544 - iteration no. 5
+
+Thread -1924626688 - iteration no. 5
+
+Thread -1914136832 - iteration no. 5
+
+
+
+https://linux.die.net/man/3/pthread_join
+
+
+
+1 #include <stdio.h>
+2 #include <stdlib.h>
+3 #include <pthread.h>
+4
+5 void *dispid(void *num_iter) {
+6         int i, x = *(int *) num_iter;
+7         for(i=0;i<x;i++) {
+8                 printf("\nThread %d - iteration no. %d\n",pthread_self(),i+1);
+9         }
+10 }
+11
+12 int main(int argc, char* argv[]) {
+13         int i, num_iter = 5, num_thds = 3, max_thds = 100;
+14         if(argc > 1) num_thds = strtol(argv[1],NULL,10);
+15         if(num_thds>max_thds) num_thds = max_thds;
+16         pthread_t thd_iter, workers[num_thds];
+17         for(i=0;i<num_thds;i++) {
+18                 if(pthread_create(&thd_iter,NULL,(void*) dispid,(void*) &num_iter) || (i!=0 && pthread_join(workers[i-1],NULL))) {
+19                         perror("[*] ERROR [*]: Failed to create thread.\n");
+20                         exit(-i+1); //accounting for i==0, error code gives iteration number
+21                 }
+22                 workers[i] = thd_iter;
+23         }
+24         for(i=0;i<num_thds;i++) {
+25                 pthread_join(workers[i],NULL); //parent waits for workers
+26         }
+27         exit(0);
+28 }
+
+
+
+[cs412e12@nova ~/hw3]$ gcc tri_thds.c -pthread -o tt
+[cs412e12@nova ~/hw3]$ tt
+
+Thread 1840191232 - iteration no. 1
+
+Thread 1840191232 - iteration no. 2
+
+Thread 1840191232 - iteration no. 3
+
+Thread 1840191232 - iteration no. 4
+
+Thread 1840191232 - iteration no. 5
+
+Thread 1850681088 - iteration no. 1
+
+Thread 1850681088 - iteration no. 2
+
+Thread 1850681088 - iteration no. 3
+
+Thread 1850681088 - iteration no. 4
+
+Thread 1850681088 - iteration no. 5
+
+Thread 1840191232 - iteration no. 1
+
+Thread 1840191232 - iteration no. 2
+
+Thread 1840191232 - iteration no. 3
+
+Thread 1840191232 - iteration no. 4
+
+Thread 1840191232 - iteration no. 5
+
+[cs412e12@nova ~/hw3]$ tt
+
+Thread -108013824 - iteration no. 1
+
+Thread -108013824 - iteration no. 2
+
+Thread -108013824 - iteration no. 3
+
+Thread -108013824 - iteration no. 4
+
+Thread -108013824 - iteration no. 5
+
+Thread -97523968 - iteration no. 1
+
+Thread -97523968 - iteration no. 2
+
+Thread -97523968 - iteration no. 3
+
+Thread -97523968 - iteration no. 4
+
+Thread -97523968 - iteration no. 5
+
+Thread -108013824 - iteration no. 1
+
+Thread -108013824 - iteration no. 2
+
+Thread -108013824 - iteration no. 3
+
+Thread -108013824 - iteration no. 4
+
+Thread -108013824 - iteration no. 5
+
+
+
+1 #include <stdio.h>
+2 #include <stdlib.h>
+3 #include <pthread.h>
+4
+5 pthread_t older_sib = 0;
+6
+7 void *dispid(void *num_iter) {
+8         int i, x = *(int *) num_iter;
+9         if(older_sib!=0) pthread_join(older_sib,NULL);
+10         for(i=0;i<x;i++) {
+11                 printf("\nPID %d, Thread %d, Iteration no. %d\n",getpid(),pthread_self(),i+1);
+12         }
+13 }
+14
+15 int main(int argc, char* argv[]) {
+16         int i, num_iter = 5, num_thds = 3, max_thds = 100;
+17         older_sib = pthread_self();
+18         if(argc > 1) num_thds = strtol(argv[1],NULL,10);
+19         if(num_thds>max_thds) num_thds = max_thds;
+20         pthread_t thd_iter, workers[num_thds];
+21         for(i=0;i<num_thds;i++) {
+22                 if(pthread_create(&thd_iter,NULL,(void*) dispid,(void*) &num_iter)) {
+23                         perror("[*] ERROR [*]: Failed to create/join thread.\n");
+24                         exit(-i+1); //accounting for i==0, error code gives iteration number
+25                 }
+26                 workers[i] = thd_iter;
+27                 older_sib = thd_iter;
+28         }
+29         for(i=0;i<num_thds;i++) {
+30                 pthread_join(workers[i],NULL); //parent waits for workers
+31         }
+32         for(i=0;i<num_thds;i++) {
+33                 printf("Thread id of worker#%d is %d\n",i+1,workers[i]);
+34         }
+35         exit(0);
+36 }
+
+
+
+[cs412e12@nova ~/hw3]$ gcc tri_thds.c -pthread -o tt
+[cs412e12@nova ~/hw3]$ tt
+
+PID 10010, Thread 1320363776, Iteration no. 1
+
+PID 10010, Thread 1320363776, Iteration no. 2
+
+PID 10010, Thread 1341343488, Iteration no. 1
+
+PID 10010, Thread 1320363776, Iteration no. 3
+
+PID 10010, Thread 1320363776, Iteration no. 4
+
+PID 10010, Thread 1330853632, Iteration no. 1
+
+PID 10010, Thread 1330853632, Iteration no. 2
+
+PID 10010, Thread 1330853632, Iteration no. 3
+
+PID 10010, Thread 1330853632, Iteration no. 4
+
+PID 10010, Thread 1330853632, Iteration no. 5
+
+PID 10010, Thread 1320363776, Iteration no. 5
+
+PID 10010, Thread 1341343488, Iteration no. 2
+
+PID 10010, Thread 1341343488, Iteration no. 3
+
+PID 10010, Thread 1341343488, Iteration no. 4
+
+PID 10010, Thread 1341343488, Iteration no. 5
+Thread id of worker#1 is 1320363776
+Thread id of worker#2 is 1330853632
+Thread id of worker#3 is 1341343488
+
+
+
+1 #include <stdio.h>
+2 #include <stdlib.h>
+3 #include <pthread.h>
+4
+5 pthread_t older_sib = 0;
+6
+7 void *dispid(void *num_iter) {
+8         int i, x = *(int *) num_iter;
+9         printf("\n\nolder_sib %d\n",older_sib);
+10         if(older_sib!=0) {
+11                 printf("thread %d waiting...\n",pthread_self());
+12                 pthread_join(older_sib,NULL);
+13         }
+14         for(i=0;i<x;i++) {
+15                 printf("\nPID %d, Thread %d, Iteration no. %d\n",getpid(),pthread_self(),i+1);
+16         }
+17 }
+18
+19 int main(int argc, char* argv[]) {
+20         int i, num_iter = 5, num_thds = 3, max_thds = 100;
+21         older_sib = pthread_self();
+22         if(argc > 1) num_thds = strtol(argv[1],NULL,10);
+23         if(num_thds>max_thds) num_thds = max_thds;
+24         pthread_t thd_iter, workers[num_thds];
+25         for(i=0;i<num_thds;i++) {
+26                 printf("Outer loop iteration %d\n",i);
+27                 if(pthread_create(&thd_iter,NULL,(void*) dispid,(void*) &num_iter)) {
+28                         perror("[*] ERROR [*]: Failed to create/join thread.\n");
+29                         exit(-i+1); //accounting for i==0, error code gives iteration number
+30                 }
+31                 workers[i] = thd_iter;
+32                 older_sib = thd_iter;
+33         }
+34         for(i=0;i<num_thds;i++) {
+35                 pthread_join(workers[i],NULL); //parent waits for workers
+36         }
+37         for(i=0;i<num_thds;i++) {
+38                 printf("Thread id of worker#%d is %d\n",i+1,workers[i]);
+39         }
+40         exit(0);
+41 }
+
+
+
+[cs412e12@nova ~/hw3]$ gcc tri_thds.c -pthread -o tt
+[cs412e12@nova ~/hw3]$ tt
+Outer loop iteration 0
+Outer loop iteration 1
+Outer loop iteration 2
+
+
+older_sib 858195712
+thread 847705856 waiting...
+
+
+older_sib 858195712
+thread 858195712 waiting...
+
+PID 13422, Thread 858195712, Iteration no. 1
+
+PID 13422, Thread 858195712, Iteration no. 2
+
+PID 13422, Thread 858195712, Iteration no. 3
+
+PID 13422, Thread 858195712, Iteration no. 4
+
+PID 13422, Thread 858195712, Iteration no. 5
+
+PID 13422, Thread 847705856, Iteration no. 1
+
+PID 13422, Thread 847705856, Iteration no. 2
+
+PID 13422, Thread 847705856, Iteration no. 3
+
+PID 13422, Thread 847705856, Iteration no. 4
+
+PID 13422, Thread 847705856, Iteration no. 5
+
+
+older_sib 858195712
+thread 837216000 waiting...
+
+PID 13422, Thread 837216000, Iteration no. 1
+
+PID 13422, Thread 837216000, Iteration no. 2
+
+PID 13422, Thread 837216000, Iteration no. 3
+
+PID 13422, Thread 837216000, Iteration no. 4
+
+PID 13422, Thread 837216000, Iteration no. 5
+Thread id of worker#1 is 837216000
+Thread id of worker#2 is 847705856
+Thread id of worker#3 is 858195712
+
+
+so older_sib is assigned before the first child thread executes. need to correct. maybe pass in older_sib as arg?
+
+
+
+1 #include <stdio.h>
+2 #include <stdlib.h>
+3 #include <pthread.h>
+4
+5 void *dispid(void *x) {
+6         int i;//, x = *(int *) num_iter;
+7         int num_iter=5;
+8         pthread_t older_sib = *(pthread_t *) x;
+9         if(&older_sib!=NULL) {
+10                 printf("\n\nolder_sib %d\n",older_sib);
+11                 printf("thread %d waiting...\n",pthread_self());
+12                 pthread_join(older_sib,NULL);
+13         }
+14         for(i=0;i<num_iter;i++) {
+15                 printf("\nPID %d, Thread %d, Iteration no. %d\n",getpid(),pthread_self(),i+1);
+16         }
+17 }
+18
+19 int main(int argc, char* argv[]) {
+20         int i, num_iter = 5, num_thds = 3, max_thds = 100;
+21         if(argc > 1) num_thds = strtol(argv[1],NULL,10);
+22         if(num_thds>max_thds) num_thds = max_thds;
+23         pthread_t thd_iter, *older_sib=NULL, workers[num_thds];
+24         for(i=0;i<num_thds;i++) {
+25                 printf("Outer loop iteration %d\n",i);
+26                 if(pthread_create(&thd_iter,NULL,(void*) dispid,(void*) older_sib)) {
+27                         perror("[*] ERROR [*]: Failed to create/join thread.\n");
+28                         exit(-i+1); //accounting for i==0, error code gives iteration number
+29                 }
+30                 workers[i] = thd_iter;
+31                 older_sib = &thd_iter;
+32         }
+33         for(i=0;i<num_thds;i++) {
+34                 pthread_join(workers[i],NULL); //parent waits for workers
+35         }
+36         for(i=0;i<num_thds;i++) {
+37                 printf("Thread id of worker#%d is %d\n",i+1,workers[i]);
+38         }
+39         exit(0);
+40 }
+
+
+
+[cs412e12@nova ~/hw3]$ gcc tri_thds.c -pthread -o tt
+[cs412e12@nova ~/hw3]$ tt
+Outer loop iteration 0
+Outer loop iteration 1
+Segmentation fault
+
+
+Commenting out pthread_create() - and thus *dispid() - gives same seg fault:
+
+
+1 #include <stdio.h>
+2 #include <stdlib.h>
+3 #include <pthread.h>
+4
+5 void *dispid(void *x) {
+6         int i;//, x = *(int *) num_iter;
+7         int num_iter=5;
+8         pthread_t older_sib = *(pthread_t *) x;
+9         if(&older_sib!=NULL) {
+10                 printf("\n\nolder_sib %d\n",older_sib);
+11                 printf("thread %d waiting...\n",pthread_self());
+12                 pthread_join(older_sib,NULL);
+13         }
+14         for(i=0;i<num_iter;i++) {
+15                 printf("\nPID %d, Thread %d, Iteration no. %d\n",getpid(),pthread_self(),i+1);
+16         }
+17 }
+18
+19 int main(int argc, char* argv[]) {
+20         int i, num_iter = 5, num_thds = 3, max_thds = 100;
+21         if(argc > 1) num_thds = strtol(argv[1],NULL,10);
+22         if(num_thds>max_thds) num_thds = max_thds;
+23         pthread_t thd_iter, workers[num_thds], *older_sib=NULL;
+24         for(i=0;i<num_thds;i++) {
+25                 printf("Outer loop iteration %d\n",i);
+26 //              if(pthread_create(&thd_iter,NULL,(void*) dispid,(void*) older_sib)) {
+27 //                      perror("[*] ERROR [*]: Failed to create/join thread.\n");
+28 //                      exit(-i+1); //accounting for i==0, error code gives iteration number
+29 //              }
+30 //              workers[i] = thd_iter;
+31 //              older_sib = &thd_iter;
+32         }
+33         for(i=0;i<num_thds;i++) {
+34                 pthread_join(workers[i],NULL); //parent waits for workers
+35         }
+36         for(i=0;i<num_thds;i++) {
+37                 printf("Thread id of worker#%d is %d\n",i+1,workers[i]);
+38         }
+39         exit(0);
+40 }
+
+
+
+[cs412e12@nova ~/hw3]$ gcc tri_thds.c -pthread -o tt
+[cs412e12@nova ~/hw3]$ tt
+Outer loop iteration 0
+Outer loop iteration 1
+Outer loop iteration 2
+Segmentation fault
+
+(test not shown:) even when remove printf() statement && all subsequent for loops, still getting segfault(after iterating thru outer loop). BUT:
+
+
+
+1 #include <stdio.h>
+2 #include <stdlib.h>
+3 #include <pthread.h>
+4
+5 void *dispid(void *x) {
+6         int i;//, x = *(int *) num_iter;
+7         int num_iter=5;
+8         pthread_t older_sib = *(pthread_t *) x;
+9         if(&older_sib!=NULL) {
+10                 printf("\n\nolder_sib %d\n",older_sib);
+11                 printf("thread %d waiting...\n",pthread_self());
+12                 pthread_join(older_sib,NULL);
+13         }
+14         for(i=0;i<num_iter;i++) {
+15                 printf("\nPID %d, Thread %d, Iteration no. %d\n",getpid(),pthread_self(),i+1);
+16         }
+17 }
+18
+19 int main(int argc, char* argv[]) {
+20         int i, num_iter = 5, num_thds = 3, max_thds = 100;
+21         if(argc > 1) num_thds = strtol(argv[1],NULL,10);
+22         if(num_thds>max_thds) num_thds = max_thds;
+23         pthread_t thd_iter, workers[num_thds], *older_sib=NULL;
+24         for(i=0;i<num_thds;i++) {
+25                 printf("Outer loop iteration %d\n",i);
+26 //              if(pthread_create(&thd_iter,NULL,(void*) dispid,(void*) older_sib)) {
+27 //                      perror("[*] ERROR [*]: Failed to create/join thread.\n");
+28 //                      exit(-i+1); //accounting for i==0, error code gives iteration number
+29 //              }
+30                 workers[i] = thd_iter;
+31                 older_sib = &thd_iter;
+32         }
+33         for(i=0;i<num_thds;i++) {
+34 //              pthread_join(workers[i],NULL); //parent waits for workers
+35         }
+36         for(i=0;i<num_thds;i++) {
+37                 printf("Thread id of worker#%d is %d\n",i+1,workers[i]);
+38         }
+39         exit(0);
+40 }
+
+
+
+[cs412e12@nova ~/hw3]$ gcc tri_thds.c -pthread -o tt
+[cs412e12@nova ~/hw3]$ tt
+Outer loop iteration 0
+Outer loop iteration 1
+Outer loop iteration 2
+Thread id of worker#1 is 100727712
+Thread id of worker#2 is 100727712
+Thread id of worker#3 is 100727712
+
+
+it compiles successfully when both pthread methods calls are commented out.
+
+
+
+1 #include <stdio.h>
+2 #include <stdlib.h>
+3 #include <pthread.h>
+4
+5 void *dispid(void *x) {
+6         int i;//, x = *(int *) num_iter;
+7         int num_iter=5;
+8         printf("Testing %d\n",pthread_self());
+9         pthread_t older_sib = *(pthread_t *) x;
+10         if(&older_sib!=NULL) {
+11                 printf("\n\nolder_sib %d\n",older_sib);
+12                 printf("thread %d waiting...\n",pthread_self());
+13                 pthread_join(older_sib,NULL);
+14         }
+15         for(i=0;i<num_iter;i++) {
+16                 printf("\nPID %d, Thread %d, Iteration no. %d\n",getpid(),pthread_self(),i+1);
+17         }
+18 }
+19
+20 int main(int argc, char* argv[]) {
+21         int i, num_iter = 5, num_thds = 3, max_thds = 100;
+22         if(argc > 1) num_thds = strtol(argv[1],NULL,10);
+23         if(num_thds>max_thds) num_thds = max_thds;
+24         pthread_t thd_iter, workers[num_thds], *older_sib=NULL;
+25         for(i=0;i<num_thds;i++) {
+26                 printf("Outer loop iteration %d\n",i);
+27                 if(pthread_create(&thd_iter,NULL,(void*) dispid,(void*) older_sib)) {
+28                         perror("[*] ERROR [*]: Failed to create/join thread.\n");
+29                         exit(-i+1); //accounting for i==0, error code gives iteration number
+30                 }
+31                 workers[i] = thd_iter;
+32                 older_sib = &thd_iter;
+33         }
+34         for(i=0;i<num_thds;i++) {
+35 //              pthread_join(workers[i],NULL); //parent waits for workers
+36         }
+37         for(i=0;i<num_thds;i++) {
+38                 printf("Thread id of worker#%d is %d\n",i+1,workers[i]);
+39         }
+40         exit(0);
+41 }
+
+
+
+[cs412e12@nova ~/hw3]$ gcc tri_thds.c -pthread -o tt
+[cs412e12@nova ~/hw3]$ tt
+Outer loop iteration 0
+Outer loop iteration 1
+Testing 935319296
+Outer loop iteration 2
+Testing 945809152
+
+
+older_sib 945809152
+thread 945809152 waiting...
+Segmentation fault
+
+
+[cs412e12@nova ~/hw3]$ tt
+Outer loop iteration 0
+Outer loop iteration 1
+Testing 371017472
+Outer loop iteration 2
+Testing 381507328
+
+
+older_sib 381507328
+thread 381507328 waiting...
+Segmentation fault
+
+
+
+1 #include <stdio.h>
+2 #include <stdlib.h>
+3 #include <pthread.h>
+4
+5 void *dispid(void *x) {
+6         int i;//, x = *(int *) num_iter;
+7         int num_iter=5;
+8         printf("Testing %d\n",pthread_self());
+9 //      pthread_t older_sib = *(pthread_t *) x;
+10 //      if(&older_sib!=NULL) {
+11 //              printf("\n\nthread %d waiting on %d\n",pthread_self(),older_sib);
+12 //              pthread_join(older_sib,NULL);
+13 //      }
+14         for(i=0;i<num_iter;i++) {
+15                 printf("\nPID %d, Thread %d, Iteration no. %d\n",getpid(),pthread_self(),i+1);
+16         }
+17 }
+18
+19 int main(int argc, char* argv[]) {
+20         int i, num_iter = 5, num_thds = 3, max_thds = 100;
+21         if(argc > 1) num_thds = strtol(argv[1],NULL,10);
+22         if(num_thds>max_thds) num_thds = max_thds;
+23         pthread_t thd_iter, workers[num_thds], *older_sib=NULL, parent=pthread_self();
+24         printf("Parent thread is %d\n",pthread_self());
+25         for(i=0;i<num_thds;i++) {
+26                 if(i>0) older_sib = &thd_iter; //the parent doesn't have an older_sib
+27                 printf("Outer loop iteration %d, older sibling addr %x\n",i,older_sib);
+28                 if(pthread_create(&thd_iter,NULL,(void*) dispid,(void*) older_sib)) {
+29                         perror("[*] ERROR [*]: Failed to create/join thread.\n");
+30                         exit(-i+1); //accounting for i==0, error code gives iteration number
+31                 }
+32                 workers[i] = thd_iter;
+33         }
+34         for(i=0;i<num_thds;i++) {
+35                 pthread_join(workers[i],NULL); //parent waits for workers
+36         }
+37         for(i=0;i<num_thds;i++) {
+38                 printf("Thread id of worker#%d is %d\n",i+1,workers[i]);
+39         }
+40         exit(0);
+41 }
+
+
+
+[cs412e12@nova ~/hw3]$ gcc tri_thds.c -pthread -o tt
+[cs412e12@nova ~/hw3]$ tt
+Parent thread is -640483200
+Outer loop iteration 0, older sibling addr 0
+Outer loop iteration 1, older sibling addr e6d4e68
+Testing -629991680
+
+PID 26752, Thread -629991680, Iteration no. 1
+
+PID 26752, Thread -629991680, Iteration no. 2
+
+PID 26752, Thread -629991680, Iteration no. 3
+
+PID 26752, Thread -629991680, Iteration no. 4
+
+PID 26752, Thread -629991680, Iteration no. 5
+Outer loop iteration 2, older sibling addr e6d4e68
+Testing -619501824
+
+PID 26752, Thread -619501824, Iteration no. 1
+
+PID 26752, Thread -619501824, Iteration no. 2
+
+PID 26752, Thread -619501824, Iteration no. 3
+
+PID 26752, Thread -619501824, Iteration no. 4
+
+PID 26752, Thread -619501824, Iteration no. 5
+Thread id of worker#1 is -629991680
+Thread id of worker#2 is -619501824
+Thread id of worker#3 is -609011968
+
+
+*****  THE FAULT IS IN LINE 9.  *****
+
+
+
+2 #include <stdlib.h>
+3 #include <pthread.h>
+4
+5 void *dispid(void *x) {
+6         int i;//, x = *(int *) num_iter;
+7         int num_iter=5;
+8         printf("Testing %d\n",pthread_self());
+9         pthread_t *older_sib = (pthread_t *) x;
+10         if(*older_sib!=0) {
+11                 printf("\n\nthread %d waiting on %d addr %x\n",pthread_self(),*older_sib,older_    sib);
+12                 pthread_join(*older_sib,NULL);
+13         }
+14         for(i=0;i<num_iter;i++) {
+15                 printf("\nPID %d, Thread %d, Iteration no. %d\n",getpid(),pthread_self(),i+1);
+16         }
+17 }
+18
+19 int main(int argc, char* argv[]) {
+20         int i, num_iter = 5, num_thds = 3, max_thds = 100;
+21         if(argc > 1) num_thds = strtol(argv[1],NULL,10);
+22         if(num_thds>max_thds) num_thds = max_thds;
+23         pthread_t workers[num_thds], thd_iter=0, older_sib=0, parent=pthread_self();
+24         printf("Parent thread is %d\n",pthread_self());
+25         for(i=0;i<num_thds;i++) {
+26                 //printf("Outer loop iteration %d, older sibling %d\n",i,*older_sib);
+27                 if(pthread_create(&thd_iter,NULL,(void*) dispid,(void*) &older_sib)) {
+28                         perror("[*] ERROR [*]: Failed to create/join thread.\n");
+29                         exit(-i+1); //accounting for i==0, error code gives iteration number
+30                 } else {
+31                         if(i>0) older_sib = workers[i-1];
+32                 }
+33                 workers[i] = thd_iter;
+34         }
+35         for(i=0;i<num_thds;i++) {
+36                 pthread_join(workers[i],NULL); //parent waits for workers
+37         }
+38         for(i=0;i<num_thds;i++) {
+39                 printf("Thread id of worker#%d is %d\n",i+1,workers[i]);
+40         }
+41         exit(0);
+42 }
+
+
+
+[cs412e12@nova ~/hw3]$ gcc tri_thds.c -pthread -o tt
+[cs412e12@nova ~/hw3]$ tt
+Parent thread is -1018703744
+Testing -1008212224
+
+PID 31499, Thread -1008212224, Iteration no. 1
+
+PID 31499, Thread -1008212224, Iteration no. 2
+
+PID 31499, Thread -1008212224, Iteration no. 3
+
+PID 31499, Thread -1008212224, Iteration no. 4
+
+PID 31499, Thread -1008212224, Iteration no. 5
+Testing -997722368
+
+
+thread -997722368 waiting on -1008212224 addr bbe4d9f8
+
+PID 31499, Thread -997722368, Iteration no. 1
+
+PID 31499, Thread -997722368, Iteration no. 2
+
+PID 31499, Thread -997722368, Iteration no. 3
+
+PID 31499, Thread -997722368, Iteration no. 4
+
+PID 31499, Thread -997722368, Iteration no. 5
+Testing -987232512
+
+
+thread -987232512 waiting on -997722368 addr bbe4d9f8
+
+PID 31499, Thread -987232512, Iteration no. 1
+
+PID 31499, Thread -987232512, Iteration no. 2
+
+PID 31499, Thread -987232512, Iteration no. 3
+
+PID 31499, Thread -987232512, Iteration no. 4
+
+PID 31499, Thread -987232512, Iteration no. 5
+Thread id of worker#1 is -1008212224
+Thread id of worker#2 is -997722368
+Thread id of worker#3 is -987232512

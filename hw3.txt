@@ -1,0 +1,33 @@
+Write a program (in C, or Java, or C++, or C#) that creates three new threads (besides the already existing main thread) and synchronizes them in such a way that each thread displays it's thread id in turn for 5 iterations. The output of the program should look like this:
+
+Thread 1 - iteration no. 1
+
+Thread 2 - iteration no. 1
+
+Thread 3 - iteration no. 1
+
+Thread 1 - iteration no. 2
+
+Thread 2 - iteration no. 2
+
+Thread 3 - iteration no. 2
+
+Thread 1 - iteration no. 3
+
+Thread 2 - iteration no. 3
+
+Thread 3 - iteration no. 3
+
+Thread 1 - iteration no. 4
+
+Thread 2 - iteration no. 4
+
+Thread 3 - iteration no. 4
+
+Thread 1 - iteration no. 5
+
+Thread 2 - iteration no. 5
+
+Thread 3 - iteration no. 5
+
+Deliverables: the source code + a screenshot of the running program.
