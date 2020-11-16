@@ -9,6 +9,9 @@ int threads_created = 0, thread_counter = 0, num_thds = 3;
 
 void *dispid(void *x) { //function for child threads to execute
 	int i, num_iter=5;
+
+	if(x != NULL) num_iter = (int *) x;
+
 	//printf("Testing %d\n",pthread_self());
 	//printf("\n%d threads created\n",++threads_created); //Shared resource
 
@@ -36,9 +39,10 @@ void *dispid(void *x) { //function for child threads to execute
 }
 
 int main(int argc, char* argv[]) {
-	int i, max_thds = 100;
+	int i, max_thds = 100, *num_iter=NULL;
 
 	if(argc > 1) num_thds = strtol(argv[1],NULL,10);
+	if(argc > 2) num_iter = strtol(argv[2],NULL,10);
 	if(num_thds>max_thds) num_thds = max_thds;
 
 	pthread_t workers[num_thds], parent=pthread_self();
@@ -48,11 +52,12 @@ int main(int argc, char* argv[]) {
 	pthread_attr_init(&tattr);
 	pthread_attr_setschedpolicy(&tattr, SCHED_RR);
 
-	printf("Parent thread is %d\n",parent);
+	printf("Program format is: tt.o [number of threads [number of iterations]]")
+	printf("\nParent thread is %d\n",parent);
 
 	for(i=0;i<num_thds;i++) {
-		if(pthread_create(&workers[i],&tattr,(void*) dispid,NULL)) {
-			perror("[*] ERROR [*]: Failed to create/join thread.\n");
+		if(pthread_create(&workers[i],&tattr,(void*) dispid,num_iter)) {
+			perror("[*] ERROR [*]: Failed to create thread.\n");
 			exit(-1-i); //accounting for i==0, error code gives iteration number
 		}
 	}

@@ -1,0 +1,66 @@
+omt@byersgilt:/mnt/c/Users/omt$ ./tt.o 4 8
+Parent thread is 1069004608
+
+PID 1720, Thread 1069000448, Iteration no. 1, CPU ID 3
+
+PID 1720, Thread 1060607744, Iteration no. 1, CPU ID 5
+
+PID 1720, Thread 1043822336, Iteration no. 1, CPU ID 2
+
+PID 1720, Thread 1052215040, Iteration no. 1, CPU ID 1
+
+PID 1720, Thread 1052215040, Iteration no. 2, CPU ID 1
+
+PID 1720, Thread 1069000448, Iteration no. 2, CPU ID 3
+
+PID 1720, Thread 1060607744, Iteration no. 2, CPU ID 5
+
+PID 1720, Thread 1043822336, Iteration no. 2, CPU ID 2
+
+PID 1720, Thread 1052215040, Iteration no. 3, CPU ID 1
+
+PID 1720, Thread 1069000448, Iteration no. 3, CPU ID 3
+
+PID 1720, Thread 1060607744, Iteration no. 3, CPU ID 5
+
+PID 1720, Thread 1043822336, Iteration no. 3, CPU ID 2
+
+PID 1720, Thread 1052215040, Iteration no. 4, CPU ID 1
+
+PID 1720, Thread 1069000448, Iteration no. 4, CPU ID 3
+
+PID 1720, Thread 1060607744, Iteration no. 4, CPU ID 5
+
+PID 1720, Thread 1043822336, Iteration no. 4, CPU ID 2
+
+PID 1720, Thread 1052215040, Iteration no. 5, CPU ID 1
+
+PID 1720, Thread 1069000448, Iteration no. 5, CPU ID 3
+
+PID 1720, Thread 1060607744, Iteration no. 5, CPU ID 5
+
+PID 1720, Thread 1043822336, Iteration no. 5, CPU ID 2
+
+PID 1720, Thread 1052215040, Iteration no. 6, CPU ID 4
+
+PID 1720, Thread 1069000448, Iteration no. 6, CPU ID 3
+
+PID 1720, Thread 1060607744, Iteration no. 6, CPU ID 5
+
+PID 1720, Thread 1043822336, Iteration no. 6, CPU ID 2
+
+PID 1720, Thread 1052215040, Iteration no. 7, CPU ID 4
+
+PID 1720, Thread 1069000448, Iteration no. 7, CPU ID 3
+
+PID 1720, Thread 1060607744, Iteration no. 7, CPU ID 5
+
+PID 1720, Thread 1043822336, Iteration no. 7, CPU ID 2
+
+PID 1720, Thread 1052215040, Iteration no. 8, CPU ID 4
+
+PID 1720, Thread 1069000448, Iteration no. 8, CPU ID 3
+
+PID 1720, Thread 1060607744, Iteration no. 8, CPU ID 5
+
+PID 1720, Thread 1043822336, Iteration no. 8, CPU ID 2
