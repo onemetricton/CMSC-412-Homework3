@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
 	pthread_attr_init(&tattr);
 	pthread_attr_setschedpolicy(&tattr, SCHED_RR);
 
-	printf("Program format is: tt.o [number of threads [number of iterations]]")
+	printf("Program format is: tt.o [number of threads [number of iterations]]\n");
 	printf("\nParent thread is %d\n",parent);
 
 	for(i=0;i<num_thds;i++) {
